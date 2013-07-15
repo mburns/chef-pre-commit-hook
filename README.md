@@ -13,15 +13,14 @@ A fork of [Doug Ireton](http://dougireton.com/blog/2012/12/10/creating-a-git-pre
 To Install
 ----------
 
-# Install Prerequsities
-$ gem install tailor
-$ gem install foodcritic
+    # Install Prerequsities
+    $ gem install tailor
+    $ gem install foodcritic
 
-# Checkout code
-$ cd ~/repos
-$ git clone git@github.com:mburns/chef-pre-commit-hook.git
+    # Checkout code
+    $ cd ~/repos
+    $ git clone git@github.com:mburns/chef-pre-commit-hook.git
 
-
-# Symlink or copy the pre-commit file to .git/hooks/pre-commit in your chef repository
-$ ln -s ~/repos/chef-pre-commit-hook/pre-commit ~/repos/chef-repo/.git/hooks/pre-commit
+    # Symlink or copy the pre-commit file to .git/hooks/pre-commit in your chef repository
+    $ ln -s ~/repos/chef-pre-commit-hook/pre-commit ~/repos/chef-repo/.git/hooks/pre-commit
 
