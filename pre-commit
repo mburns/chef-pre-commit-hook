@@ -13,7 +13,7 @@ COOKBOOK_PATH = "#{ PARENT_PATH}/cookbooks/"
 
 puts "Checking for cookbook errors..."
 Dir["#{ COOKBOOK_PATH }*/"].each do |dirname|
-  puts "\t#{ File.split(dirname)[-1] }"
+  #puts "\t#{ File.split(dirname)[-1] }"
 
   knife_output = `knife cookbook test #{ File.split(dirname)[-1] } -o #{ COOKBOOK_PATH } -c #{ PARENT_PATH}/.chef/knife.rb`
   unless $?.success?
