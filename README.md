@@ -1,8 +1,27 @@
-A git pre-commit hook to run against Chef Cookbooks.
+A git pre-commit hook for Chef Cookbooks
+========================================
+
+This script checks the following, before committing code to a chef server that might cause it to break, die, or otherwise be sad:
 
 1. Checks for trailing whitespace, mixed tabs and spaces
-2. `knife cookbook test` - Ruby and ERB template syntax.
-3. `tailor` - Ruby style conventions
-4. `foodcritic` - Chef cookbook linting tool
+2. Runs `knife cookbook test` - Ruby and ERB template syntax.
+3. Runs `tailor` - Ruby style conventions
+4. Runs `foodcritic` - Chef cookbook linting tool
 
-http://dougireton.com/blog/2012/12/10/creating-a-git-pre-commit-hook-for-chef-cookbooks/
+A fork of [Doug Ireton](http://dougireton.com/blog/2012/12/10/creating-a-git-pre-commit-hook-for-chef-cookbooks/)
+
+To Install
+----------
+
+# Install Prerequsities
+$ gem install tailor
+$ gem install foodcritic
+
+# Checkout code
+$ cd ~/repos
+$ git clone git@github.com:mburns/chef-pre-commit-hook.git
+
+
+# Symlink or copy the pre-commit file to .git/hooks/pre-commit in your chef repository
+$ ln -s ~/repos/chef-pre-commit-hook/pre-commit ~/repos/chef-repo/.git/hooks/pre-commit
+
