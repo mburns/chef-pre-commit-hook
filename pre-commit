@@ -1,46 +1,66 @@
 #!/usr/bin/env ruby
 
-puts "Check for whitespace errors..."
+def run_git(path)
+  puts "Check for whitespace errors..."
 
-git_ws_check = `git diff-index --check --cached HEAD --`
-unless $?.success?
-  puts git_ws_check
-  exit 1
+  git_ws_check = `git diff-index --check --cached HEAD --`
+  unless $?.success?
+    puts git_ws_check
+    exit 1
+  end
 end
 
 PARENT_PATH = "#{ `git rev-parse --show-toplevel`.chomp }"
 COOKBOOK_PATH = "#{ PARENT_PATH}/cookbooks/" 
 
-puts "Checking for cookbook errors..."
-Dir["#{ COOKBOOK_PATH }*/"].each do |dirname|
-  #puts "\t#{ File.split(dirname)[-1] }"
+def run_knife_test(path)
+  puts "Checking for cookbook errors..."
+  Dir["#{ COOKBOOK_PATH }*/"].each do |dirname|
+    #puts "\t#{ File.split(dirname)[-1] }"
 
-  knife_output = `knife cookbook test #{ File.split(dirname)[-1] } -o #{ COOKBOOK_PATH } -c #{ PARENT_PATH}/.chef/knife.rb`
+    knife_output = `knife cookbook test #{ File.split(dirname)[-1] } -o #{ COOKBOOK_PATH } -c #{ PARENT_PATH}/.chef/knife.rb`
+    unless $?.success?
+      puts knife_output
+      exit 1
+    end
+  end
+end
+
+def run_tailor(f)
+  #puts 'Running tailor...'
+  tailor_output = `tailor --max-line-length 999 #{ f }`
   unless $?.success?
-    puts knife_output
+    puts tailor_output
     exit 1
   end
 end
 
-puts 'Running tailor...'
+FC_RULES = "FC006,FC008,FC009,FC010,FC018,FC030,FC031,FC032,FC037,FC038,FC040,FC042"
+
+def run_foodcritic(dir)
+  puts "Running foodcritic..."
+
+  fc_output = `foodcritic --tags #{ FC_RULES } #{ dir }`
+    unless $?.success?
+    puts fc_output
+    exit 1
+  end
+end
+
+# run_git()
 
 # Get the file names of (A)dded, (C)opied, (M)odified Ruby files 
 STAGED_FILES = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb'`
 STAGED_FILES.lines do |file|
   file.chomp! # remove carriage returns
-  puts file
-    tailor_output = `tailor --max-line-length 999 #{ file }`
-    unless $?.success?
-      puts tailor_output
-      exit 1
-    end
+  puts file  
+  run_tailor(file)
 end
 
-puts "Running foodcritic..."
-
-FC_RULES = "FC006,FC008,FC009,FC010,FC018,FC030,FC031,FC032,FC037,FC038,FC040,FC042"
-fc_output = `foodcritic --tags #{ FC_RULES } #{ COOKBOOK_PATH }`
-  unless $?.success?
-  puts fc_output
-  exit 1
+STAGED_COOKBOOKS = ''
+STAGED_COOKBOOKS.lines do |dir|
+  puts dir
+  #run_knife_test()
+  #run_foodcritic(dir)
 end
+
