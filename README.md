@@ -24,6 +24,6 @@ repository you want this script to run on.
     $ cd ~/repos
     $ git clone git@github.com:mburns/chef-pre-commit-hook.git
 
-    # Symlink (or copy) the pre-commit file to `.git/hooks/pre-commit` in your chef repository
+    # Symlink (or copy) the pre-commit file to .git/hooks/pre-commit in your chef repository
     $ ln -s ~/repos/chef-pre-commit-hook/pre-commit ~/repos/chef-repo/.git/hooks/pre-commit
 
