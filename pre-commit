@@ -1,15 +1,7 @@
 #!/usr/bin/env ruby
 
-def run_git()
-  git_ws_check = `git diff-index --check --cached HEAD --`
-  unless $?.success?
-    puts git_ws_check
-    exit 1
-  end
-end
-
-def run_tailor(f)
-  tailor_output = `tailor --max-line-length 999 #{ f }`
+def run_tailor(file)
+  tailor_output = `tailor --max-line-length 999 #{ file }`
   unless $?.success?
     puts tailor_output
     exit 1
@@ -38,7 +30,11 @@ def run_foodcritic(dir)
 end
 
 puts "Checking for whitespace errors..."
-run_git()
+git_ws_check = `git diff-index --color-words --check --cached HEAD --`
+unless $?.success?
+  puts git_ws_check
+  exit 1
+end
 
 puts 'Checking syntax...'
 # Get the file names of (A)dded, (C)opied, (M)odified Ruby files 
@@ -48,21 +44,21 @@ STAGED_FILES.lines do |file|
   #puts "\t#{ file }"
   run_tailor(file)
 end
-puts "\tcleared #{ STAGED_FILES.lines.count }"
+puts "\tcleared #{ STAGED_FILES.lines.count } files"
 
 puts "Checking for cookbook errors..."
 STAGED_COOKBOOKS = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb' | cut -d/ -f2 | sort | uniq`
 STAGED_COOKBOOKS.lines do |dir|
   dir.chomp!
-  puts "\t#{ dir }"
+  #puts "\t#{ dir }"   
   run_knife_test(dir)
 end
-puts "\tknife cookbook tested #{ STAGED_COOKBOOKS.lines.count } cookbooks"
+puts "\tknife cookbook test x#{ STAGED_COOKBOOKS.lines.count } cookbooks"
 
 puts "Running foodcritic..."
 STAGED_COOKBOOKS.lines do |dir|
   dir.chomp!
-  puts "\t${ dir }"
+  #puts "\t${ dir }"
   run_foodcritic(dir)
 end
 puts "\tfoodcritiqued #{ STAGED_COOKBOOKS.lines.count } cookbooks"
