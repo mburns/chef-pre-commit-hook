@@ -1,11 +1,17 @@
 #!/usr/bin/env ruby
 
 def run_git()
-  puts "Check for whitespace errors..."
-
   git_ws_check = `git diff-index --check --cached HEAD --`
   unless $?.success?
     puts git_ws_check
+    exit 1
+  end
+end
+
+def run_tailor(f)
+  tailor_output = `tailor --max-line-length 999 #{ f }`
+  unless $?.success?
+    puts tailor_output
     exit 1
   end
 end
@@ -14,10 +20,6 @@ PARENT_PATH = "#{ `git rev-parse --show-toplevel`.chomp }"
 COOKBOOK_PATH = "#{ PARENT_PATH}/cookbooks/" 
 
 def run_knife_test(dir)
-  puts "Checking for cookbook errors..."
-  #Dir["#{ COOKBOOK_PATH }*/"].each do |dirname|
-  puts "knife cookbook test #{ dir }"
-
   knife_output = `knife cookbook test #{ dir } -c #{ PARENT_PATH }/.chef/knife.rb`
   unless $?.success?
     puts knife_output
@@ -25,20 +27,9 @@ def run_knife_test(dir)
   end
 end
 
-def run_tailor(f)
-  #puts 'Running tailor...'
-  tailor_output = `tailor --max-line-length 999 #{ f }`
-  unless $?.success?
-    puts tailor_output
-    exit 1
-  end
-end
-
 FC_RULES = "FC006,FC008,FC009,FC010,FC018,FC030,FC031,FC032,FC037,FC038,FC040,FC042"
 
 def run_foodcritic(dir)
-  puts "Running foodcritic..."
-
   fc_output = `foodcritic --tags #{ FC_RULES } cookbooks/#{ dir }`
     unless $?.success?
     puts fc_output
@@ -46,21 +37,32 @@ def run_foodcritic(dir)
   end
 end
 
-#run_git()
+puts "Checking for whitespace errors..."
+run_git()
 
+puts 'Checking syntax...'
 # Get the file names of (A)dded, (C)opied, (M)odified Ruby files 
 STAGED_FILES = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb'`
 STAGED_FILES.lines do |file|
   file.chomp! # remove carriage returns
-  puts file
+  #puts "\t#{ file }"
   run_tailor(file)
 end
+puts "\tcleared #{ STAGED_FILES.lines.count }"
 
+puts "Checking for cookbook errors..."
 STAGED_COOKBOOKS = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb' | cut -d/ -f2 | sort | uniq`
 STAGED_COOKBOOKS.lines do |dir|
   dir.chomp!
-  puts dir
+  puts "\t#{ dir }"
   run_knife_test(dir)
+end
+puts "\tknife cookbook tested #{ STAGED_COOKBOOKS.lines.count } cookbooks"
+
+puts "Running foodcritic..."
+STAGED_COOKBOOKS.lines do |dir|
+  dir.chomp!
+  puts "\t${ dir }"
   run_foodcritic(dir)
 end
-
+puts "\tfoodcritiqued #{ STAGED_COOKBOOKS.lines.count } cookbooks"
