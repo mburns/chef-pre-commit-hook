@@ -1,11 +1,13 @@
 #!/usr/bin/env ruby
 
-def run_git_whistespace_check()
-  puts "Checking for whitespace errors..."
+def run_git_whitespace_check()
   git_ws_check = `git diff-index --color-words --check --cached HEAD --`
-  unless $?.success?
-    puts git_ws_check
-    exit 1
+  if git_ws_check.to_s.strip.length != 0
+    puts "Checking for whitespace errors..."
+    unless $?.success?
+      puts git_ws_check
+      exit 1
+    end
   end
 end
 
@@ -19,29 +21,28 @@ def run_tailor(files)
       exit 1
     end
   end
-  puts "\tcleared #{ STAGED_FILES.lines.count } files"
+  puts "\tcleared #{ files.lines.count } files"
 end
-
-PARENT_PATH = "#{ `git rev-parse --show-toplevel`.chomp }"
-COOKBOOK_PATH = "#{ PARENT_PATH}/cookbooks/" 
 
 def run_knife_test(path, dirs)
   puts "Checking for cookbook errors..."
+  print "\t"
   dirs.lines do |dir|
-  dir.chomp!
+    dir.chomp!
+    print dir + " "
     knife_output = `knife cookbook test #{ dir } -c #{ path }/.chef/knife.rb`
     unless $?.success?
       puts knife_output
       exit 1
     end
   end
-  puts "\tknife cookbook test #{ STAGED_COOKBOOKS.gsub("\n", ', ') }"
 end
 
-
 def run_foodcritic(dirs, rules)
-  puts "Running foodcritic..."
-  dir.lines do |dir|
+  puts "\nRunning foopdcritic..."
+  print "\t"
+  dirs.lines do |dir|
+    print dir + " "
     dir.chomp!
     fc_output = `foodcritic --tags #{ rules } cookbooks/#{ dir }`
       unless $?.success?
@@ -49,18 +50,26 @@ def run_foodcritic(dirs, rules)
       exit 1
     end
   end
-  puts "\tfoodcritiqued #{ STAGED_COOKBOOKS.gsub("\n", ', ') } cookbooks"
 end
 
 run_git_whitespace_check()
 
-# Get the file names of (A)dded, (C)opied, (M)odified Ruby files 
-STAGED_FILES = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb'`
-run_tailor(STAGED_FILES)
+PARENT_PATH = "#{ `git rev-parse --show-toplevel`.chomp }"
+COOKBOOK_PATH = "#{ PARENT_PATH}/cookbooks/" 
 
-STAGED_COOKBOOKS = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb' | cut -d/ -f2 | sort | uniq`
-run_knife_test(PARENT_PATH, dir)
+# Get the file names of (A)dded, (C)opied, (M)odified Ruby files
+staged_files = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb'`
+if staged_files.to_s.strip.length == 0
+  exit
+else
+  run_tailor(staged_files)
+end
 
-rules = "FC006,FC008,FC009,FC010,FC018,FC030,FC031,FC032,FC037,FC038,FC040,FC042"
-run_foodcritic(STAGED_COOKBOOKS, rules)
+staged_cookbooks = `git diff-index --name-only --diff-filter=ACM HEAD -- '*.rb' | cut -d/ -f2 | sort | uniq`
+if staged_cookbooks.to_s.strip.length != 0
+  run_knife_test(PARENT_PATH, staged_cookbooks)
 
+  $stdout.flush
+  rules = "FC006,FC008,FC009,FC010,FC018,FC030,FC031,FC032,FC037,FC038,FC040,FC042"
+  run_foodcritic(staged_cookbooks, rules)
+end
